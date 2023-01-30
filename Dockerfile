@@ -1,15 +1,13 @@
 FROM node:slim 
-# Create app directory
+
+#Create app directory
 WORKDIR /usr/src/app
 
-# Install app dependencies
+#Install app dependencies
+COPY /react-redux-realworld-example-app /usr/src/app
 
-COPY package*.json ./
-
+#Install app
 RUN npm install
 
-
-# Bundle app source
-COPY . .
-
+#Run app
 CMD [ "npm", "start" ]
