@@ -2,34 +2,59 @@
 - hosts: all
   become: yes
   tasks: 
+    - name: Install pip
+      ansible.builtin.apt:
+        name: pip
+        state: latest
+        update_cache: yes
+
+    - name: Install requirements 
+      ansible.builtin.pip:
+        name: docker-py
+        state: latest
+        
     - name: Install docker
       ansible.builtin.apt:
         name: docker.io
         state: latest
-        update_cache: yes
+
     - name: Enable docker
       ansible.builtin.service:    
         name: docker
         state: started
         enabled: yes
+
     - name: Clone the forked repo
       ansible.builtin.git:
         repo: https://github.com/Remeziz/react-redux-realworld-example-app
         dest: /usr/local/react-redux-realworld-example-app
+
     - name: Build the image
-      ansible.builtin.shell:
-        cmd: docker build /usr/local/react-redux-realworld-example-app/ -t test/node-docker
-    - name: Run container  
-      ansible.builtin.shell:
-        cmd: docker run -p 8080:4100 -d test/node-docker
+      community.docker.docker_image:
+        name: node-docker
+        build:
+          path: /usr/local/react-redux-realworld-example-app/
+        tag: v2
+        source: build         
+
+    - name: Run container
+      community.docker.docker_container:
+        name: node-docker
+        state: started
+        image: node-docker:v2
+        ports: 
+         - "8080:4100"    
+
     - name: Wait app started
       ansible.builtin.wait_for:
         port: 8080
         delay: 5          
+
     - name: Curl app
       ansible.builtin.uri:
         url: http://localhost:8080
       register: curl_output
+
     - name: Output 
       ansible.builtin.debug:
         msg: "{{ curl_output }}"    
